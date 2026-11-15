@@ -1,0 +1,29 @@
+# Gradle / Kotlin build output
+.gradle/
+.kotlin/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Machine-specific config (SDK path etc.)
+local.properties
+
+# Release signing: never commit keys or their passwords
+keystore.properties
+*.jks
+*.keystore
+
+# Built packages
+*.apk
+*.aab
+output-metadata.json
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
