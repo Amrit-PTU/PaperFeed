@@ -1,0 +1,15 @@
+{
+  "name": "PaperFeed",
+  "short_name": "PaperFeed",
+  "description": "Follow physics journals and arXiv, keep reading lists, and search papers by meaning.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f7fc",
+  "theme_color": "#f7f7fc",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

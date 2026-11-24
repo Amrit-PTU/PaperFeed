@@ -40,6 +40,18 @@ An Android app that follows nuclear-physics journals and arXiv, sends a notifica
 - **Meaning search** (default search mode): runs on the phone with bge-small-en-v1.5 (ONNX, the same engine as Gurbani Ask). It finds papers about your keywords even when they use other words, in your saved papers and in the journal archives and arXiv, all ranked together by closeness in meaning. Saved papers are indexed in the background after each refresh. *Exact words* and *Author* still run the plain server search.
 - The APK is arm64-only by default (the model needs native code). For the emulator, build with `-PABIS=arm64-v8a,x86_64`.
 
+## Web app (Chrome, iPhone, any browser)
+
+`web/` is the same app for browsers: plain HTML and JavaScript with no build step, published to GitHub Pages by `.github/workflows/pages.yml` on every push to `main` that touches it.
+
+- **Chrome / Edge on a computer or Android:** open the page; the install icon in the address bar adds it as an app.
+- **iPhone / iPad:** open the page in Safari → Share → **Add to Home Screen**. It then opens full screen like an app, and notifications can be turned on in its Settings.
+- Feeds, search (Meaning / Exact words / Author), paper pages with ratings, Read later, lists and notes, author pages, sources, themes (Material You colours, light/dark), and JSON backup that imports from and exports to the Android app.
+- Everything is stored in the browser (IndexedDB); nothing goes to a server of ours. Requests go from the device straight to Crossref and OpenAlex.
+- Browsers can't read the arXiv API or journal RSS feeds (no CORS), so journals come from Crossref (with OpenAlex as automatic fallback) and arXiv from OpenAlex, which lags arXiv by 1–2 days.
+- Meaning search runs the same bge-small model in a Web Worker with ONNX Runtime Web. The 34 MB model downloads the first time a meaning search is made and is cached for offline use.
+- Run it locally: copy `app/src/main/assets/bge_*` into `web/model/`, download the three ONNX Runtime files listed in the workflow into `web/vendor/`, then `python3 -m http.server -d web`.
+
 ## Build
 
 ### Requirements

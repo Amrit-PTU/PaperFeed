@@ -1,0 +1,42 @@
+# Publishes the web app (web/) to GitHub Pages. The search model and ONNX Runtime Web are added
+# at build time so the repository doesn't carry them twice.
+name: Web app
+
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', 'app/src/main/assets/bge_*', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add the search model and ONNX Runtime Web
+        run: |
+          mkdir -p web/model web/vendor
+          cp app/src/main/assets/bge_small.onnx app/src/main/assets/bge_vocab.txt web/model/
+          V=1.31.1
+          for f in ort.wasm.min.mjs ort-wasm-simd-threaded.mjs ort-wasm-simd-threaded.wasm; do
+            curl -sfL -o "web/vendor/$f" "https://cdn.jsdelivr.net/npm/onnxruntime-web@$V/dist/$f"
+          done
+          ls -la web/model web/vendor
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deployment
+        uses: actions/deploy-pages@v4

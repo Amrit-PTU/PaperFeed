@@ -27,3 +27,7 @@ output-metadata.json
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Web app: fetched at deploy time (see .github/workflows/pages.yml)
+web/vendor/
+web/model/
