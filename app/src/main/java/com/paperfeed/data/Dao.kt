@@ -253,3 +253,33 @@ interface ListDao {
         delete(id)
     }
 }
+
+@Dao
+interface VectorDao {
+    /** Papers with no vector yet, or whose vector was made before their abstract arrived. */
+    @Query(
+        """SELECT a.`key` AS `key`, a.title AS title, a.abstract AS abstract FROM articles a
+           LEFT JOIN article_vectors v ON v.articleKey = a.`key`
+           WHERE v.articleKey IS NULL OR (v.withAbstract = 0 AND a.abstract IS NOT NULL AND a.abstract != '')
+           ORDER BY a.published DESC LIMIT :limit"""
+    )
+    suspend fun needingVectors(limit: Int): List<VectorSource>
+
+    @Query(
+        """SELECT COUNT(*) FROM articles a LEFT JOIN article_vectors v ON v.articleKey = a.`key`
+           WHERE v.articleKey IS NULL OR (v.withAbstract = 0 AND a.abstract IS NOT NULL AND a.abstract != '')"""
+    )
+    fun observePending(): Flow<Int>
+
+    @Upsert
+    suspend fun upsert(vectors: List<ArticleVector>)
+
+    @Query("SELECT articleKey, vec FROM article_vectors")
+    suspend fun all(): List<KeyVec>
+
+    @Query("DELETE FROM article_vectors WHERE articleKey NOT IN (SELECT `key` FROM articles)")
+    suspend fun pruneOrphans()
+
+    @Query("SELECT * FROM articles WHERE `key` IN (:keys)")
+    suspend fun articles(keys: List<String>): List<Article>
+}

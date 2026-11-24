@@ -2,7 +2,9 @@ package com.paperfeed.ui
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -18,6 +20,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 
 data class ThemePreset(
     val id: String,
@@ -122,8 +125,17 @@ fun PaperFeedTheme(themeId: String, customTheme: String, textScale: Float, conte
     }
     val density = LocalDensity.current
     CompositionLocalProvider(LocalDensity provides Density(density.density, density.fontScale * textScale)) {
-        MaterialTheme(colorScheme = scheme, typography = Typography(), content = content)
+        MaterialTheme(colorScheme = scheme, typography = Typography(), shapes = AppShapes, content = content)
     }
 }
+
+/** Material You's rounder corners: cards 20dp, sheets and dialogs 28dp. */
+private val AppShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp),
+)
 
 fun isDarkScheme(scheme: ColorScheme) = scheme.background.luminance() < 0.4f

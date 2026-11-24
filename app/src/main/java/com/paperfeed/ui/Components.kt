@@ -167,7 +167,7 @@ fun ArticleRow(
             Modifier
                 .fillMaxWidth()
                 .combinedClickable(onClick = onClick, onLongClick = { menu = true })
-                .padding(horizontal = if (cards) 14.dp else 16.dp, vertical = if (compact) 7.dp else 12.dp)
+                .padding(horizontal = 16.dp, vertical = if (compact) 8.dp else if (cards) 14.dp else 12.dp)
         ) {
             Text(
                 article.title,
@@ -218,8 +218,9 @@ fun ArticleRow(
         ScaledText(prefs.feedScale) {
             if (cards) {
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 5.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                 ) { content() }
             } else content()
         }

@@ -15,10 +15,10 @@ class Converters {
 }
 
 @Database(
-    entities = [Article::class, Source::class, ArticleList::class, ListEntry::class, Note::class],
-    version = 2,
+    entities = [Article::class, Source::class, ArticleList::class, ListEntry::class, Note::class, ArticleVector::class],
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -26,6 +26,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun sources(): SourceDao
     abstract fun lists(): ListDao
     abstract fun notes(): NoteDao
+    abstract fun vectors(): VectorDao
 
     companion object {
         fun build(context: Context): AppDatabase =

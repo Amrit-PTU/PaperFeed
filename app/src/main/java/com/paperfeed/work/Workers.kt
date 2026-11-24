@@ -74,6 +74,7 @@ class RefreshWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             )
         }
         repo.enrichPending(limit = 20)
+        runCatching { app.smart.index(budgetMs = 60_000) }
 
         val lastBackup = maxOf(settings.lastDriveBackup, settings.lastSafBackup)
         if ((settings.driveAutoBackup || settings.safBackupUri.isNotBlank()) &&

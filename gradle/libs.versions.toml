@@ -18,6 +18,7 @@ robolectric = "4.17"
 billing = "9.1.0"
 webkit = "1.17.1"
 junit = "4.13.2"
+onnxruntime = "1.32.0"
 
 [libraries]
 androidx-core = { module = "androidx.core:core-ktx", version.ref = "core" }
@@ -44,6 +45,8 @@ billing = { module = "com.android.billingclient:billing-ktx", version.ref = "bil
 androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 junit = { module = "junit:junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+
+onnxruntime = { module = "com.microsoft.onnxruntime:onnxruntime-android", version.ref = "onnxruntime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

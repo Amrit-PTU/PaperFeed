@@ -52,6 +52,10 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
 import com.paperfeed.PaperFeedApp
 import com.paperfeed.net.Text as TextUtil
 
@@ -73,7 +77,6 @@ fun HomeScreen(
     var reachedEnd by remember(sourceFilter) { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     var sizeSheet by remember { mutableStateOf(false) }
 
     fun loadOlder() {
@@ -107,19 +110,27 @@ fun HomeScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            TopAppBar(
-                scrollBehavior = scrollBehavior,
-                navigationIcon = { IconButton(onClick = onOpenDrawer) { Icon(Icons.Outlined.Menu, "Menu") } },
-                title = { Text("PaperFeed") },
-                actions = {
-                    IconButton(onClick = onSupport) { Icon(Icons.Outlined.Paid, "Support PaperFeed") }
+            // Material You search bar, as in Google's own apps: tap it to search papers by meaning.
+            Surface(
+                onClick = onSearch,
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier.statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth().height(56.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onOpenDrawer, modifier = Modifier.padding(start = 4.dp)) { Icon(Icons.Outlined.Menu, "Menu") }
+                    Text(
+                        "Search papers",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f).padding(start = 4.dp),
+                    )
                     IconButton(onClick = { sizeSheet = true }) { Icon(Icons.Outlined.TextFields, "Text size and layout") }
-                    IconButton(onClick = onSearch) { Icon(Icons.Outlined.Search, "Search all journals") }
-                },
-            )
+                    IconButton(onClick = onSupport, modifier = Modifier.padding(end = 4.dp)) { Icon(Icons.Outlined.Paid, "Support PaperFeed") }
+                }
+            }
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
@@ -129,12 +140,13 @@ fun HomeScreen(
                     Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    FilterChip(selected = sourceFilter == null, onClick = { sourceFilter = null }, label = { Text("All") })
+                    FilterChip(selected = sourceFilter == null, onClick = { sourceFilter = null }, label = { Text("All") }, shape = CircleShape)
                     enabled.forEach { s ->
                         FilterChip(
                             selected = sourceFilter == s.id,
                             onClick = { sourceFilter = if (sourceFilter == s.id) null else s.id },
                             label = { Text(s.name) },
+                            shape = CircleShape,
                         )
                     }
                 }

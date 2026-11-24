@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
 private val Context.dataStore by preferencesDataStore("settings")
 
 data class AppSettings(
-    val themeId: String = "light",
+    val themeId: String = "dynamic",
     /** Custom theme colors as ARGB ints, encoded "isDark;primary;background;surface;text". */
     val customTheme: String = "0;-12627531;-1;-722948;-14540254",
     val refreshMinutes: Int = 60,
@@ -30,7 +30,7 @@ data class AppSettings(
     /** Text size of the home/list rows and of the article reader, adjustable from their "Aa" buttons. */
     val feedScale: Float = 1f,
     val readerScale: Float = 1f,
-    val feedStyle: FeedStyle = FeedStyle.LIST,
+    val feedStyle: FeedStyle = FeedStyle.CARDS,
     /** Abstract lines shown under each title in the feed (0 = none). */
     val previewLines: Int = 0,
     val elsevierApiKey: String = "",
@@ -56,6 +56,7 @@ class SettingsStore(private val context: Context) {
         val feedStyle = stringPreferencesKey("feed_style")
         val previewLines = intPreferencesKey("preview_lines")
         val elsevierKey = stringPreferencesKey("elsevier_key")
+        val materialYou = booleanPreferencesKey("material_you_v1")
     }
 
     val flow: Flow<AppSettings> = context.dataStore.data.map { p -> p.toSettings() }
@@ -63,7 +64,7 @@ class SettingsStore(private val context: Context) {
     suspend fun current(): AppSettings = flow.first()
 
     private fun Preferences.toSettings() = AppSettings(
-        themeId = this[K.theme] ?: "light",
+        themeId = this[K.theme] ?: "dynamic",
         customTheme = this[K.custom] ?: AppSettings().customTheme,
         refreshMinutes = this[K.refresh] ?: 60,
         notificationsEnabled = this[K.notif] ?: true,
@@ -76,10 +77,20 @@ class SettingsStore(private val context: Context) {
         textScale = (this[K.textScale] ?: 100) / 100f,
         feedScale = (this[K.feedScale] ?: 100) / 100f,
         readerScale = (this[K.readerScale] ?: 100) / 100f,
-        feedStyle = runCatching { FeedStyle.valueOf(this[K.feedStyle] ?: "LIST") }.getOrDefault(FeedStyle.LIST),
+        feedStyle = runCatching { FeedStyle.valueOf(this[K.feedStyle] ?: "CARDS") }.getOrDefault(FeedStyle.CARDS),
         previewLines = this[K.previewLines] ?: 0,
         elsevierApiKey = this[K.elsevierKey] ?: "",
     )
+
+    /** One-time switch to the Material You look for installs still on the old defaults. */
+    suspend fun migrateToMaterialYou() {
+        context.dataStore.edit { p ->
+            if (p[K.materialYou] == true) return@edit
+            if (p[K.theme] == null || p[K.theme] == "light") p[K.theme] = "dynamic"
+            if (p[K.feedStyle] == null || p[K.feedStyle] == "LIST") p[K.feedStyle] = "CARDS"
+            p[K.materialYou] = true
+        }
+    }
 
     suspend fun update(transform: (AppSettings) -> AppSettings) {
         context.dataStore.edit { p ->

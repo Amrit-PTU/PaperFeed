@@ -5,6 +5,7 @@ import com.paperfeed.backup.BackupManager
 import com.paperfeed.data.AppDatabase
 import com.paperfeed.data.Repository
 import com.paperfeed.data.SettingsStore
+import com.paperfeed.search.SmartSearch
 import com.paperfeed.work.Notifier
 import com.paperfeed.work.RefreshScheduler
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +19,9 @@ class PaperFeedApp : Application() {
     lateinit var repo: Repository
         private set
     lateinit var backup: BackupManager
+        private set
+    /** Offline meaning search (same engine as Gurbani Ask). */
+    lateinit var smart: SmartSearch
         private set
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -40,6 +44,7 @@ class PaperFeedApp : Application() {
                 refreshing.value = false
             }
             repo.enrichPending(limit = 40)
+            runCatching { smart.index() }
         }
     }
 
@@ -49,9 +54,12 @@ class PaperFeedApp : Application() {
         val db = AppDatabase.build(this)
         repo = Repository(db, SettingsStore(this))
         backup = BackupManager(this, repo)
+        smart = SmartSearch(this, db)
         Notifier.createChannels(this)
         appScope.launch {
+            repo.settings.migrateToMaterialYou()
             RefreshScheduler.schedule(this@PaperFeedApp, repo.settings.current().refreshMinutes, replace = false)
+            runCatching { smart.index() }
         }
     }
 

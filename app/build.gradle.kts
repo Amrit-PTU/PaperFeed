@@ -24,6 +24,8 @@ android {
         versionName = providers.gradleProperty("VERSION_NAME").getOrElse("1.1")
         // External donation link (Ko-fi, PayPal, …). Keep empty for Google Play builds; Play
         // requires its own billing for tips, which TipJar provides.
+        // The meaning-search model ships native code; arm64 phones only unless -PABIS=… is passed.
+        ndk { abiFilters += providers.gradleProperty("ABIS").getOrElse("arm64-v8a").split(",") }
         buildConfigField("String", "DONATE_URL", "\"${providers.gradleProperty("DONATE_URL").getOrElse("")}\"")
     }
 
@@ -45,6 +47,11 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
+    }
+
+    packaging {
+        // Compress the ONNX Runtime native library in the APK; it's unpacked on install.
+        jniLibs { useLegacyPackaging = true }
     }
 
     compileOptions {
@@ -89,6 +96,7 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.billing)
     implementation(libs.androidx.webkit)
+    implementation(libs.onnxruntime)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
 }

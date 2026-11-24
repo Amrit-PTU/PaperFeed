@@ -111,3 +111,16 @@ data class ListWithCount(
     @Embedded val list: ArticleList,
     val count: Int,
 )
+
+/** Meaning-search vector of a paper (bge-small, 384 floats, little endian). */
+@Entity(tableName = "article_vectors")
+data class ArticleVector(
+    @PrimaryKey val articleKey: String,
+    val vec: ByteArray,
+    /** False when the paper had no abstract yet; it is re-embedded once one arrives. */
+    val withAbstract: Boolean,
+)
+
+data class VectorSource(val key: String, val title: String, val abstract: String?)
+
+class KeyVec(val articleKey: String, val vec: ByteArray)

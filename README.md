@@ -34,6 +34,12 @@ An Android app that follows nuclear-physics journals and arXiv, sends a notifica
 - **Search** (magnifier on Home) covers every year of every journal in your sources, plus arXiv. Search by title/keywords or by author, sorted by best match or newest first, with endless scrolling.
 - **Author pages** load all of an author's papers page by page.
 
+## Latest: Material You and meaning search
+
+- **Material You**: wallpaper colours by default, a Google-style search bar on Home, rounded cards, pill chips. Existing installs on the old Paper theme or List layout are switched once; any other theme stays as you picked it.
+- **Meaning search** (default search mode): runs on the phone with bge-small-en-v1.5 (ONNX, the same engine as Gurbani Ask). It finds papers about your keywords even when they use other words, in your saved papers and in the journal archives and arXiv, all ranked together by closeness in meaning. Saved papers are indexed in the background after each refresh. *Exact words* and *Author* still run the plain server search.
+- The APK is arm64-only by default (the model needs native code). For the emulator, build with `-PABIS=arm64-v8a,x86_64`.
+
 ## Build
 
 ### Requirements
