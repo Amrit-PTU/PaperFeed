@@ -12,34 +12,60 @@ let ready = null;
 let session = null;
 let tok = null;
 
-/** Model files are big (34 MB): keep them in the Cache API so they download once. */
-async function cachedFetch(path, onProgress) {
+const CHUNK = 4 * 1024 * 1024;
+
+async function fetchRetry(url, init, tries = 5) {
+  for (let i = 0; ; i++) {
+    try {
+      const r = await fetch(url, init);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r;
+    } catch (e) {
+      if (i + 1 >= tries) throw e;
+      await new Promise((res) => setTimeout(res, 1000 * 2 ** i));
+    }
+  }
+}
+
+/**
+ * Model files are big (34 MB): download in 4 MB pieces (each retried on its own, so a flaky
+ * connection doesn't restart the whole download) and keep the result in the Cache API.
+ */
+async function cachedFetch(path, onProgress, chunked = true) {
   const url = new URL(path, base).href;
   const cache = await caches.open(MODEL_CACHE);
   const hit = await cache.match(url);
   if (hit) return hit;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`Couldn't download ${path} (HTTP ${r.status})`);
-  const total = Number(r.headers.get('content-length')) || 0;
-  const reader = r.body.getReader();
-  const parts = [];
-  let got = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    parts.push(value);
-    got += value.length;
-    if (onProgress && total) onProgress(got / total);
+  if (!chunked) {
+    const r = await fetchRetry(url);
+    await cache.put(url, r.clone());
+    return r;
+  }
+  const first = await fetchRetry(url, { headers: { Range: `bytes=0-${CHUNK - 1}` } });
+  const parts = [new Uint8Array(await first.arrayBuffer())];
+  const range = first.headers.get('content-range'); // "bytes 0-4194303/34014426"
+  const total = first.status === 206 && range ? Number(range.split('/')[1]) : parts[0].length;
+  let got = parts[0].length;
+  onProgress?.(got / total);
+  while (got < total) {
+    const end = Math.min(got + CHUNK, total) - 1;
+    const r = await fetchRetry(url, { headers: { Range: `bytes=${got}-${end}` } });
+    const piece = new Uint8Array(await r.arrayBuffer());
+    if (r.status !== 206 || !piece.length) throw new Error('The server ignored the download range');
+    parts.push(piece);
+    got += piece.length;
+    onProgress?.(got / total);
   }
   const blob = new Blob(parts);
-  await cache.put(url, new Response(blob, { headers: { 'content-type': r.headers.get('content-type') || 'application/octet-stream' } }));
+  if (blob.size !== total) throw new Error('Incomplete download, please try again');
+  await cache.put(url, new Response(blob, { headers: { 'content-type': 'application/octet-stream' } }));
   return new Response(blob);
 }
 
 function load() {
   if (ready) return ready;
   ready = (async () => {
-    const vocab = (await (await cachedFetch('model/bge_vocab.txt')).text()).split('\n');
+    const vocab = (await (await cachedFetch('model/bge_vocab.txt', null, false)).text()).split('\n');
     if (vocab[vocab.length - 1] === '') vocab.pop();
     tok = new WordPiece(vocab);
     const bytes = new Uint8Array(await (await cachedFetch('model/bge_small.onnx', (p) => postMessage({ type: 'progress', value: p }))).arrayBuffer());
