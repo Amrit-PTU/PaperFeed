@@ -441,7 +441,7 @@ async function runSearch(reset) {
       if (!alive()) return;
       if (reset) { S.results = order(await smart.searchLibrary(q, S.qv)); show(); }
       S.status = 'Searching journals and arXiv…'; show();
-      const { items, cursor } = await net.searchArchive(q, 'any', false, sources, start);
+      const { items, cursor } = await net.searchArchive(q, 'any', false, sources, start, { preferOpenAlex: true });
       if (!alive()) return;
       S.cursor = cursor;
       const seen = new Set(S.results.map((r) => r.article.key));

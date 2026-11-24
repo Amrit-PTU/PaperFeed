@@ -15,11 +15,19 @@ const mailto = () => (config.email.includes('@') ? `&mailto=${enc(config.email)}
 const oaAuth = () => mailto() + (config.openAlexKey ? `&api_key=${enc(config.openAlexKey)}` : '');
 const day = (ms) => new Date(ms).toISOString().slice(0, 10);
 
-async function getJson(url, { timeout = 20000, accept } = {}) {
+async function getJson(url, { timeout = 20000, accept, retries = 2 } = {}) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeout);
   try {
     const r = await fetch(url, { signal: ctrl.signal, headers: accept ? { Accept: accept } : undefined });
+    if ((r.status === 429 || r.status === 503 || r.status === 504) && retries > 0) {
+      // Busy or rate-limited (OpenAlex throttles anonymous searches under load): wait and retry.
+      let wait = 4;
+      try { wait = Math.min(Number((await r.clone().json()).retryAfter) || 4, 12); } catch { /* not JSON */ }
+      clearTimeout(t);
+      await new Promise((res) => setTimeout(res, wait * 1000));
+      return getJson(url, { timeout, accept, retries: retries - 1 });
+    }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return accept && !accept.includes('json') ? r.text() : r.json();
   } catch (e) {
@@ -221,7 +229,7 @@ export async function bibtex(doi) {
  * Searches every journal source (Crossref, all years) and the arXiv sources (OpenAlex).
  * field: 'any' | 'author'. Pass the returned cursor back for the next page.
  */
-export async function searchArchive(query, field, newest, sources, cursor = {}) {
+export async function searchArchive(query, field, newest, sources, cursor = {}, { preferOpenAlex = false } = {}) {
   const enabled = sources.filter((s) => s.enabled);
   const issns = enabled.filter((s) => s.type === 'CROSSREF').map((s) => s.query.trim());
   const byIssn = new Map(enabled.filter((s) => s.type === 'CROSSREF').map((s) => [s.query.trim(), s]));
@@ -240,6 +248,11 @@ export async function searchArchive(query, field, newest, sources, cursor = {}) 
   const journals = (async () => {
     if (cursor.crossrefDone || !issns.length) return { items: [], next: null };
     if (cursor.jvia === 'openalex') return journalsOpenAlex();
+    if (cursor.jvia === 'crossref') return journalsCrossref();
+    if (preferOpenAlex) {
+      // Meaning search: OpenAlex also searches abstracts, so its candidates are more on-topic.
+      try { return await journalsOpenAlex(); } catch { return journalsCrossref(); }
+    }
     try {
       return await journalsCrossref();
     } catch (e) {
