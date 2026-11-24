@@ -379,11 +379,14 @@ function renderSearch() {
 }
 
 function searchHint() {
+  const dl = smart.status;
+  if (S.mode === 'meaning' && !dl.modelReady && dl.modelProgress > 0 && dl.modelProgress < 1) {
+    return `Downloading the search model (34 MB, only the first time): ${Math.round(dl.modelProgress * 100)}%`;
+  }
   if (S.status) return S.status;
   if (S.mode !== 'meaning') return 'Searches every year of the journals in your sources, plus arXiv.';
   const st = smart.status;
   if (st.error) return `Meaning search unavailable: ${st.error}`;
-  if (!st.modelReady && st.modelProgress > 0 && st.modelProgress < 1) return `Downloading the search model (34 MB, once): ${Math.round(st.modelProgress * 100)}%`;
   if (st.pending > 0 && st.indexing) return `Finds papers on your topic, even without the exact words. Indexing ${st.pending} papers in this browser…`;
   return 'Finds papers on your topic, even without the exact words. Runs in this browser.';
 }
